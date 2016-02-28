@@ -8,7 +8,7 @@ require(XML)
 require(RCurl)
 require(tau)
 require(graphics)
-require(RMySQL)
+# require(RMySQL)
 
 ## Setting SQL variables
 #MySQLDBdrv <- dbDriver("MySQL")
@@ -18,7 +18,7 @@ require(RMySQL)
 
 ## The Data
 ChsLocal <- 'https://raw.githubusercontent.com/srsmithdata/Calculating-Chess-Scores/master/tournamentinfo.txt'
-FileConn <- file(description = ChsLocal, open = 'rt', blocking = T )
+
 ## Importing data to R
 ## This code is based on the following spec. If the spec changes or does not conform, the code will give an error message and cancel out for the code to be revised.
 ##
@@ -34,41 +34,13 @@ FileConn <- file(description = ChsLocal, open = 'rt', blocking = T )
 ## Num  | USCF ID / Rtg (Pre->Post)       | Pts |  1  |  2  |  3  |  4  |  5  |  6  |  7  |
 
 ## Reading in data from file
-ttbl1 = readLines(con = FileConn, warn = T)
-close.connection(FileConn)
+ttbl1 = read.delim(file = ChsLocal, header = T, sep = '|', quote = '', stringsAsFactors = F, strip.white = T, skip = 1, comment.char = '-')
+FrstRowNum <- seq.int(2, length(ttbl1[,1]), 2)
+SecRowNum <- seq.int(3, length(ttbl1[,1]), 2)
 
 ## Splitting datas by player row
-Row1 <- seq.int(from = 5, by , to = length(ttbl1))
-Row2 <- seq.int(from = 6, by = 3, to = length(ttbl1))
-RowLabel1 <- 2
-RowLabel2 <- 3
+ttbl2 <- data.frame(ttbl1[FrstRowNum,], ttbl1[SecRowNum,])
 
-ttbl1 <- trimws(ttbl1, which = 'right')
-
-ttbl2Lft <- ttbl1[Row1]
-ttbl2Rt <- ttbl1[Row2]
-ttbl2LLab <- ttbl1[RowLabel1]
-ttbl2RLab <- ttbl1[RowLabel2]
-
-## Parsing the columns
-## Since the file is mostly pipe delimited, we can use that to find column start/end posns
-##
-ttbl2delim <- unlist(str_locate_all(ttbl2Lft[1], '\\|'))
-ttbl2LPPsn <- data.frame('Lst' = c(1, ttbl2Ldelim[1:9]+1), 'Lend' = c(ttbl2Ldelim[1:10]-1) )
-ttbl2RPPsn <- data.frame('Rst' = c(1, ttbl2Rdelim[1:9]+1), 'Rend' = c(ttbl2Rdelim[1:10]-1) )
-
-## Since the report writer didn't delineate the 2nd row Player info the same, manual fix:
-fixdelimR <- c(8, 16, 23, 26, 27, 29, 32, 35, 36, 38)
-fixdelimR[seq.int(1,10,2)]
-fixdelimR[seq.int(2,10,2)]
-
-ttbl2RPPsn <- ttbl2RPPsn[1,], c[(8,16), (23, 26), (27, 29), (32, 35), (36, 38)], ttbl2RPPsn[3:10,])
-
-
-ttbl2LVarNM <- c( trimws( substring( ttbl2LLab, ttbl2PPsn[1:10,1], ttbl2PPsn[1:10,2])))
-
-ttbl2RVarNM <- c( trimws( substring( ttbl2RLab, ttbl2PPsn[1:10,1], ttbl2PPsn[1:10,2])))
-ttbl2RVarNM
 
 ## Col Names
 
