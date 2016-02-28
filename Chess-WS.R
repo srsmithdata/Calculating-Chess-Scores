@@ -34,69 +34,72 @@ ChsLocal <- 'https://raw.githubusercontent.com/srsmithdata/Calculating-Chess-Sco
 ## Num  | USCF ID / Rtg (Pre->Post)       | Pts |  1  |  2  |  3  |  4  |  5  |  6  |  7  |
 
 ## Reading in data from file
-ttbl1 = read.delim(file = ChsLocal, header = T, sep = '|', quote = '', stringsAsFactors = F, strip.white = T, skip = 1, comment.char = '-')
-FrstRowNum <- seq.int(2, length(ttbl1[,1]), 2)
-SecRowNum <- seq.int(3, length(ttbl1[,1]), 2)
+ttbl1 = read.delim(file = ChsLocal, header = T, sep = '|', quote = '', stringsAsFactors = F, strip.white = T, skip = 1)
+FrstRowNum <- seq.int(3, length(ttbl1[,1]), 3)
+SecRowNum <- seq.int(4, length(ttbl1[,1]), 3)
 
-## Splitting datas by player row
+## Splitting data by player row
 ttbl2 <- data.frame(ttbl1[FrstRowNum,], ttbl1[SecRowNum,])
 
-
-## Col Names
-
-PairNum
-PlayerFN
-Total
-Round1
-Round2
-Round3
-Round4
-Round5
-Round6
-Round7
-State
-USCF_ID
-Pre_Rtg
-Post_Rtg
-
-
-
-## Separating lines
+## Parsing fields that didn't have delimiters and had multiple data points
 ##
-substr(
+#### Pull space locations to facilitate delimiting
+SpBr <- data.frame(str_locate_all(string = ttbl2$Player.Name.1, ' ')[1])
+StPosn <- as.vector(c(1, 15, 20, 24, 29))
+EndPosn <- as.vector(c(8, 18, 21, 27, 30))
+SpBrttbl2 <- data.frame(StPosn, EndPosn)
+ttbl3_PNMParse <- as.vector(substr(ttbl2$Player.Name.1, StPosn, EndPosn) )
+ttbl3_PNMParse <- as.vector(c(ttbl3_PNMParse, ' ' ))
+ttbl3_PNMFull <- matrix(ttbl3_PNMParse, ncol = 5)
+
+TotRndPl <- 14
+TotPart <- length(ttbl2[,1])
+
+ttbl3_Rnds <- matrix(ncol = TotRndPl, nrow = TotPart)
+
+RndNm <- as.vector('')
+for (iRnd in 1:7) {
+    OldCol <- ttbl2[,iRnd + 3]
+    FirstCol <- iRnd*2 - 1
+    SecCol <- iRnd*2
+    ttbl3_Rnds[,FirstCol] <- substring(OldCol, 1, 1)
+
+    ttbl3_Rnds[,SecCol] <- substring(OldCol, 3, 5)
+    RndNm <- as.vector(c(RndNm, paste("RndRlt", iRnd, collapse = ''), paste("RndOpp", iRnd, collapse = '')))
+    }
+
+rm(RndNm[1])
+
+
+ttbl3_PNMParseA <- ttbl3_PNMParse[ seq.int(1, length(ttbl3_PNMParse), 5) ]
+
+ttbl3_PNMParseB <- ttbl3_PNMParse[ seq.int(1, length(ttbl3_PNMParse), 5) ]
+
+ttbl3_PNMParseC <- ttbl3_PNMParse[ seq.int(1, length(ttbl3_PNMParse), 5) ]
+
+ttbl3_PNMParseD <- ttbl3_PNMParse[ seq.int(1, length(ttbl3_PNMParse), 5) ]
+
+ttbl3_PNMParseE <- ttbl3_PNMParse[ seq.int(1, length(ttbl3_PNMParse), 5) ]
+
+
+ttbl3_Pinfo <- data.frame(
+
+
+length(ttbl3_PNMParse)
+
+tail(ttbl3_PNMParse)
+## Col Names
+varnm2 <- names(ttbl2)
+varnm2str <- as.character( paste(varnm2[1:length(varnm2)]))
+
+## Manually edited string gerated by varnm2str to clean up var names
+names(ttbl2) <- as.vector(c("PlayerNbr", "PlayerName", "TotalPts", "Roundb", "Round.2", "Round.3", "Round.4", "Round.5", "Round.6",  "Round.7", "X", "USCF_ID", "Pre-Tourn_Rating", "Pre-Tourn_PSc", "Post-Tourn_Rating",  "Post-Tourn_PSc", "N-Score", "Round.1b", "Round.2b", "Round.3b", "Round.4b", "Round.5b", "Round.6b",  "Round.6b", "Xb"))
 
 
 
-########## old code:
-##########
-( "https://www.dropbox.com/sh/tdrk13cl76iko4g/AAC_wthh5RS0tefMKky6WBPoa/tb.csv?dl=1", header = FALSE, sep = ",", quote = "\"", na.strings = -1 )
-
-names(tmptbl1) <- c("Country", "Year",  "Gender", "Child", "Adult", "Elderly")
-
-dbWriteTable( conn = dbcon, name = "tb", value = tmptbl1, row.names = FALSE, overwrite = TRUE)
-
-rm("tmptbl1")
-
-tmptbl2 = read.csv("https://www.dropbox.com/s/qrfiguuvcyff4o1/population.csv?dl=1", header = TRUE, sep = ",", quote = "\"")
-
-dbWriteTable( conn = dbcon, name = "pop", value = tmptbl2, row.names = FALSE, overwrite = TRUE)
-
-rm("tmptbl2")
-f
-sqlaggtb <- "SELECT Country, Year, Sum(Child), sum(Adult), sum(Elderly) FROM tb Group by  Country, Year;"
-
-dfaggtb <- dbGetQuery(dbcon, sqlaggtb)
-
-SumPopTB <- as.integer(dfaggtb[[3]]) + as.integer(dfaggtb[[4]]) + as.integer(dfaggtb[[5]])
-
-dfyrtottb <- data.frame(dfaggtb$Country,dfaggtb$Year, SumPopTB)
-names(dfyrtottb) <- c("Country", "Year", "TBTot")
-dbWriteTable( conn = dbcon, name = "TBpYr", value = dfyrtottb, row.names = FALSE, overwrite = TRUE)
-
-sql <- "SELECT TBpYr.Country, TBpYr.Year, TBpYr.TBTot, pop.population FROM TBpYr INNER JOIN pop ON TBpYr.Country = pop.country AND TBpYr.Year = pop.year;"
-
-dfCtryYrRaw <- dbGetQuery(dbcon, sql)
-
-tbcasep100k <- (dfCtryYrRaw[3] /  dfCtryYrRaw[4] )*100000
-
-dfCtryYrRatio <- data.frame(dfCtryYrRaw[1], dfCtryYrRaw[2], tbcasep100k)
+###### Scrap:
+######
+for (i in 1:5) {
+ttbl3_PNMFull[ ,i] <- ttbl3_PNMParse[ seq.int(i, length(ttbl3_PNMParse), 5) ]
+}
+next(i)
