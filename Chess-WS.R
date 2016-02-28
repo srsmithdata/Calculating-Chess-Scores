@@ -54,15 +54,19 @@ SpBrttbl2 <- data.frame(StPosn, EndPosn)
 
 ttbl3_PNMFull <- matrix(ncol = 5, nrow = length(ttbl2$Player.Name.1), byrow = T)
 
-for(i in 1:length(ttbl2$Player.Name.1))
+i <- 1
+while( i < (1 + length(ttbl2$Player.Name.1)))
 {
-    for(j in 1:5)
+    j <- 1
+    while(j < 6 )
     {
-        ttbl3_PNMFull[i, j] <- substr(ttbl2$Player.Name.1, SpBrttbl2[i, 1], SpBrttbl2[i, 2])
+        ttbl3_PNMFull[i, j] <- substr(ttbl2$Player.Name.1[i], SpBrttbl2[j, 1], SpBrttbl2[j, 2])
+        j <- j + 1
     }
+    i <- i + 1
 }
 
-
+ttbl2$Player.Name.1
 TotRndPl <- 14
 TotPart <- length(ttbl2[,1])
 
