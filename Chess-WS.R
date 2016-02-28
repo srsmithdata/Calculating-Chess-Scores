@@ -42,19 +42,45 @@ SecRowNum <- seq.int(4, length(ttbl1[,1]), 3)
 ttbl2 <- data.frame(ttbl1[FrstRowNum,], ttbl1[SecRowNum,])
 
 ## Parsing fields that didn't have delimiters and had multiple data points
-##
+## We'll first delimit the 2nd row of the name field
 #### Pull space locations to facilitate delimiting
 SpBr <- data.frame(str_locate_all(string = ttbl2$Player.Name.1, ' ')[1])
 StPosn <- as.vector(c(1, 15, 20, 24, 29))
 EndPosn <- as.vector(c(8, 18, 21, 27, 30))
 SpBrttbl2 <- data.frame(StPosn, EndPosn)
-ttbl3_PNMParse <- as.vector(substr(ttbl2$Player.Name.1, StPosn, EndPosn) )
-ttbl3_PNMParse <- as.vector(c(ttbl3_PNMParse, ' ' ))
-ttbl3_PNMFull <- matrix(ttbl3_PNMParse, ncol = 5)
+
+#### Pulling the parsed variables with a  for loop and entering them into a matrix:
+####
+
+ttbl3_PNMFull <- matrix(ncol = 5, nrow = length(ttbl2$Player.Name.1), byrow = T)
+
+for(i in 1:length(ttbl2$Player.Name.1))
+{
+    for(j in 1:5)
+    {
+        ttbl3_PNMFull[i, j] <- substr(ttbl2$Player.Name.1, SpBrttbl2[i, 1], SpBrttbl2[i, 2])
+    }
+}
+
 
 TotRndPl <- 14
 TotPart <- length(ttbl2[,1])
 
+
+ttbl3_PNMParseA <- ttbl3_PNMParse[ seq.int(1, length(ttbl3_PNMParse), 5) ]
+
+ttbl3_PNMParseB <- ttbl3_PNMParse[ seq.int(1, length(ttbl3_PNMParse), 5) ]
+
+ttbl3_PNMParseC <- ttbl3_PNMParse[ seq.int(1, length(ttbl3_PNMParse), 5) ]
+
+ttbl3_PNMParseD <- ttbl3_PNMParse[ seq.int(1, length(ttbl3_PNMParse), 5) ]
+
+ttbl3_PNMParseE <- ttbl3_PNMParse[ seq.int(1, length(ttbl3_PNMParse), 5) ]
+
+
+
+
+#### Matrix of round data
 ttbl3_Rnds <- matrix(ncol = TotRndPl, nrow = TotPart)
 
 RndNm <- as.vector('')
@@ -71,16 +97,7 @@ for (iRnd in 1:7) {
 rm(RndNm[1])
 
 
-ttbl3_PNMParseA <- ttbl3_PNMParse[ seq.int(1, length(ttbl3_PNMParse), 5) ]
-
-ttbl3_PNMParseB <- ttbl3_PNMParse[ seq.int(1, length(ttbl3_PNMParse), 5) ]
-
-ttbl3_PNMParseC <- ttbl3_PNMParse[ seq.int(1, length(ttbl3_PNMParse), 5) ]
-
-ttbl3_PNMParseD <- ttbl3_PNMParse[ seq.int(1, length(ttbl3_PNMParse), 5) ]
-
-ttbl3_PNMParseE <- ttbl3_PNMParse[ seq.int(1, length(ttbl3_PNMParse), 5) ]
-
+ttbl4 <-
 
 ttbl3_Pinfo <- data.frame(
 
