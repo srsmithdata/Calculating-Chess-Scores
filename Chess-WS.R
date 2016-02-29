@@ -124,67 +124,6 @@ for( j in FTbliRow)
 ## with na.rm = T, the rowMeans function will take the average across the columns excluding the na fields
 
 AvgCompSc <- rowMeans(ScrNbr, na.rm = T)
-
-ScrNbr <- ifelse( is.na(ScrNbr[,]), 0, ScrNbr)
-rowsum(ScrNbr)
-
-
-
-
-rowSums
-
-
-
-
-
-
-#
-#
-# i <- 1
-# while( i < (1 + length(ttbl2$Player.Name.1)))
-# {
-#     j <- 1
-#     while(j < 8 )
-#     {
-#         ttbl3_PNMFull[i, j] <- substr(ttbl2$Player.Name.1[i], SpBrttbl2[j, 1], SpBrttbl2[j, 2])
-#         j <- j + 1
-#     }
-#     i <- i + 1
-# }
-#
-#
-#
-#
-#
-#
-#
-#
-# ###### Scrap:
-# ######
-#
-# RndNm <- RndNm[2:(length(RndNm)-1)]
-#
-# ttbl4 <- data.frame(ttbl2[,1:3], ttbl3_PNMFull[,1:5],
-#
-# ttbl3_Pinfo <- data.frame(
-#
-#
-# length(ttbl3_PNMParse)
-#
-# tail(ttbl3_PNMParse)
-# ## Col Names
-# varnm2 <- names(ttbl2)
-# varnm2str <- as.character( paste(varnm2[1:length(varnm2)]))
-#
-# ## Manually edited string gerated by varnm2str to clean up var names
-# names(ttbl2) <- as.vector(c("PlayerNbr", "PlayerName", "TotalPts", "Roundb", "Round.2", "Round.3", "Round.4", "Round.5", "Round.6",  "Round.7", "X", "USCF_ID", "Pre-Tourn_Rating", "Pre-Tourn_PSc", "Post-Tourn_Rating",  "Post-Tourn_PSc", "N-Score", "Round.1b", "Round.2b", "Round.3b", "Round.4b", "Round.5b", "Round.6b",  "Round.6b", "Xb"))
-#
-#
-#
-# ###### Scrap:
-# ######
-# for (i in 1:5) {
-# ttbl3_PNMFull[ ,i] <- ttbl3_PNMParse[ seq.int(i, length(ttbl3_PNMParse), 5) ]
-# }
-# next(i)
+FullTbl <- data.frame(FullTbl, AvgCompSc)
+names(FullTbl[,31]) <- 'AvgCompetitorRat'
 
