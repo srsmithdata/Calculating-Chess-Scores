@@ -1,22 +1,260 @@
 ---
 title: "ETL for Chess Tournament Scorecard"
 author: "S Richard Smith"
-date: "February 28, 2016"
-output: html_document
+date: "February 25, 2016"
+output:
+  html_document:
+    theme: flatly
+    highlight: pygment
+    code_folding: hide
+    toc: true
+    toc_depth: 2
+
 ---
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+# Extract, transform, and load (ETL) the chess tournament scorecard data
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+## Resources:
+#### -- Project description document
+#### -- Copy of sample file
+#### -- R program
+#### -- Other open sources software
+#### -- rPubs and Github repositories and online assets
+
+## Deliverables:
+#### -- Rmarkdown document detailing the fully replicatable code
+#### -- Explanation of the process of code development as useful
+#### -- ETL utility which will consume the raw semi-delimited flat text file and output a CSV formatted table, ready for database upload
+
+### Challenge: To challenge myself, I wanted to execute the entire project without SQL (the language in which I'm most comfortable)
+
+# Set-up
+
+## Load packages:
 
 ```{r}
-summary(cars)
+## Area with installations for packages not already installed
+## Remove comment sign ("#") before any packages you're missing
+# install.packages{"devtools")
+# install.packages{"rmarkdown")
+# install.packages{"knitr")
+# install.packages{"DBI")
+# install.packages{"xtable")
+# install.packages{"stringr")
+# install.packages{"XML")
+# install.packages{"RCurl")
+# install.packages{"tau")
+# install.packages{"graphics")
+
+# Load the required packages
+require(devtools)
+require(rmarkdown)
+require(knitr)
+require(DBI)
+require(xtable)
+require(stringr)
+require(XML)
+require(RCurl)
+require(tau)
+require(graphics)
+
+
+options(stringsAsFactors = F)
+
+
 ```
 
-You can also embed plots, for example:
 
-```{r, echo=FALSE}
-plot(cars)
+## Set up GitHub Repository
+
+The repository can be found here:
+[Chess Tournament Scorecard ETL](https://github.com/srsmithdata/Calculating-Chess-Scores/)
+
+#### Please note, I am attempting to utilize GitHub for backup and versioning.
+
+## Examine the data
+
+The data is a delimited text file with delineation that differs by row. Many [EDI](https://en.wikipedia.org/wiki/Electronic_data_interchange) standards use very complicated deliminted structures where an index number at the start of the line tells the program what delineation schema to use for that particular row. We must basically provide a simplified version of that logic here.
+
+To familiarize yourself with the input data, please see the test file [here](https://raw.githubusercontent.com/srsmithdata/Calculating-Chess-Scores/master/tournamentinfo.txt).
+
+## Develop an approach
+
+As mentioned above, depending on the line type, there are going to be variations in the column delimination and the even the variables present.
+
+Challenging myself to not use SQL forced me to think in an "R" mindset. What is a path to the solution that takes advantage of what R is good at and that is clear, easy to follow, dependable, and replicatable.
+
+Please note, this file format is assume to be the exact structure and layout by which the client will receive all his tournament reports. The only deviation is fully supported and accomodated would be number of players. However, each player must have a set of 3 rows associated with him.
+
+### The Plan:
+#### -- Load the file into R to see how the file is read (are there encoding issues, issues with NULL's, etc.)
+#### -- Split the table into two tables (or one wide table with a left and a right) to get all the information pertaining to one player on one line
+#### -- Develop any necessary data cleaning, calculating, or organizing methodogies to reach the goal above.
+
+## The Deliverable:
+
+### Loading data
+
+```{r echo=TRUE}
+
+## The Data
+ChsLocal <- 'https://raw.githubusercontent.com/srsmithdata/Calculating-Chess-Scores/master/tournamentinfo.txt'
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+## Notes on Data File Format:
+
+#### Importing data to R
+ This code is based on the following spec. If the spec changes or does not conform, the code will not perform.
+
+##### FILE SPEC:
+#### UTF-8 encoded file
+#### Headers in rows 1-4
+#### EOL indicator on every line
+#### Unit = player in 2 lines
+#### First player's first line is line 5
+####
+#### Players' data correspends to the follow alignment/positional value: (where the 2nd "##" for the comment notation is the left edge of the file. So "Pair" is in position 2)
+
+> Pair | Player Name                     |Total|Round|Round|Round|Round|Round|Round|Round|
+## Num  | USCF ID / Rtg (Pre->Post)       | Pts |  1  |  2  |  3  |  4  |  5  |  6  |  7  |
+
+```
+{r}
+## Reading in data from file
+## I iterate forward with "temp" tables (ttbl) to make the steps of extraction and transformation easier to follow.
+
+ttbl1 = read.delim(file = ChsLocal, header = T, sep = '|', quote = '', stringsAsFactors = F, strip.white = T, skip = 1)
+```
+
+### I was trying to write the code efficiently, while keeping it clear so a third party could follow the process and logic. 
+#### That being said, there were several instances where I found using the way R let's you so easily structure and organize data a huge help and time saver.
+
+```
+{r}
+FrstRowNum <- seq.int(3, length(ttbl1[,1]), 3)
+SecRowNum <- seq.int(4, length(ttbl1[,1]), 3)
+#### * NOTE: in the read.delim() function, even though on the second row there are several field that aren't separated, this function brought in the best alignment of data and variables. I did attempt to declare the "-" character as a comment character so that it would automatically drop the filler lines, but there is a "->" between the pre- and post- tournament scores, so it was dropping more than half of the second row.
+```
+
+
+## Data parsing:
+
+#### As mentioned above, there are several fields that need parsing because they did not use the separator character "|." There were also records that included two data points in one field (such as the player's match outcome and the opponent number.
+
+The player details, such as ID number and total ranking, were not separated out.
+
+#### Please see comments in code for more detailed notes.
+
+
+```
+{r}
+
+## Splitting data by player row
+ttbl2 <- data.frame(ttbl1[FrstRowNum,], ttbl1[SecRowNum,])
+
+## We'll first delimit the 2nd row of the name / demographic block
+#### Pull space locations to facilitate delimiting
+SpBr <- data.frame(str_locate_all(string = ttbl2$Player.Name.1, ' ')[1])
+
+## I use a "ruler" character row of courier that I can copy and paste when needing exact character postion or count.
+
+StPosn <- as.vector(c(1, 15, 20, 24, 29))
+EndPosn <- as.vector(c(8, 18, 21, 27, 30))
+#### You might notice the gaps, but that is a result of the field's structure.
+
+SpBrttbl2 <- data.frame(StPosn, EndPosn)
+
+#### Pulling the parsed variables with a  for loop and entering them into a matrix:
+####
+
+ttbl3_PNMFull <- matrix(ncol = 5, nrow = length(ttbl2$Player.Name.1), byrow = T)
+
+i <- 1
+while( i < (1 + length(ttbl2$Player.Name.1)))
+{
+    j <- 1
+    while(j < 6 )
+    {
+        ttbl3_PNMFull[i, j] <- substr(ttbl2$Player.Name.1[i], SpBrttbl2[j, 1], SpBrttbl2[j, 2])
+        j <- j + 1
+    }
+    i <- i + 1
+}
+tttbl3_PreR <- as.vector(c(as.integer(ttbl3_PNMFull[,2])))
+tttbl3_PostR <- as.vector(c(as.integer(ttbl3_PNMFull[,4])))
+
+ttbl3_PNMFull[,2] <- tttbl3_PreR
+ttbl3_PNMFull[,4] <- tttbl3_PostR
+
+#### Matrix of round data
+
+TotRnd <- 7
+RndCols <- TotRnd*3
+TotPart <- length(ttbl2[,2])
+ttbl3_Rnds <- matrix(ncol = RndCols, nrow = TotPart)
+
+RndNm <- as.vector('')
+
+for (iRnd in 1:7)
+{
+    OldCol <- ttbl2[,iRnd + 3]
+    FirstCol <- iRnd*3 - 2
+    SecCol <- iRnd*3 - 1
+    ThrdCol <- iRnd*3
+    ttbl3_Rnds[,FirstCol] <- substring(OldCol, 1, 1)
+    ttbl3_Rnds[,SecCol] <- substring(OldCol, 3, 5)
+    ## pulling the scores of the competitors
+    ttbl3_Rnds[,ThrdCol] <- ttbl3_PNMFull[as.integer(ttbl3_Rnds[,SecCol]) ,2]
+    RndNm <- as.vector(c(RndNm, paste("RndRlt", iRnd, collapse = ''), paste("RndOpp", iRnd, collapse = ''), paste("RndOppRat", iRnd, collapse = '')))
+}
+
+FullTbl <- data.frame( ttbl2[,1:2], ttbl2[,12], ttbl3_PNMFull[,1:5], ttbl2[,3], ttbl3_Rnds[,1:21])
+
+names(FullTbl) <- as.vector(c("PlayerNbr", "PlayerName", "PlayerState", "USCF_ID", "Pre-Tourn_Rating", "Pre-Tourn_PSc", "Post-Tourn_Rating",  "Post-Tourn_PSc", "TotalPts", as.vector(RndNm[2:22]) ) )
+
+str(FullTbl)
+```
+
+
+### To get the mean of the scores of the games played, we need to insure our scores are integers without missing values:
+
+
+```
+{r}
+
+ScrNbr <- matrix( nrow = length(FullTbl[,2]), ncol = 7)
+
+OppScCol <- seq(12, 30, 3)
+
+FTbliRow <- seq(1:length(FullTbl[ , 1]) )
+for( j in FTbliRow)
+{
+    i <- 1
+    while( i < 8)
+    {
+        CurrColNbr <- i*3 + 9
+        ScrNbr[j, i] <- as.integer( FullTbl[j, CurrColNbr] )
+        i <- i + 1
+    }
+}
+
+```
+
+I found that loops were the easiest way to affect multiple variables and then save them in an organized manner.
+
+### with na.rm = T, the rowMeans function will take the average across the columns excluding the na fields
+
+
+```
+{r}
+
+AvgCompSc <- rowMeans(ScrNbr, na.rm = T)
+FullTbl <- data.frame(FullTbl, AvgCompSc)
+names(FullTbl[,31]) <- 'AvgCompetitorRat'
+
+ExpTbl <- data.frame( FullTbl$PlayerName, FullTbl$PlayerState, FullTbl$TotalPts, FullTbl$Pre.Tourn_Rating, FullTbl$AvgCompSc)
+
+write.csv(x = ExpTbl, file = 'OutputFile.csv', na = "NULL")
+```
+
+## The file (OutputFile.csv) is now saved in your current working directory. 
