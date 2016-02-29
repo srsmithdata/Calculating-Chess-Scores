@@ -66,42 +66,54 @@ while( i < (1 + length(ttbl2$Player.Name.1)))
     i <- i + 1
 }
 
-ttbl2$Player.Name.1
-TotRndPl <- 14
-TotPart <- length(ttbl2[,1])
-
-
-ttbl3_PNMParseA <- ttbl3_PNMParse[ seq.int(1, length(ttbl3_PNMParse), 5) ]
-
-ttbl3_PNMParseB <- ttbl3_PNMParse[ seq.int(1, length(ttbl3_PNMParse), 5) ]
-
-ttbl3_PNMParseC <- ttbl3_PNMParse[ seq.int(1, length(ttbl3_PNMParse), 5) ]
-
-ttbl3_PNMParseD <- ttbl3_PNMParse[ seq.int(1, length(ttbl3_PNMParse), 5) ]
-
-ttbl3_PNMParseE <- ttbl3_PNMParse[ seq.int(1, length(ttbl3_PNMParse), 5) ]
-
-
-
 
 #### Matrix of round data
-ttbl3_Rnds <- matrix(ncol = TotRndPl, nrow = TotPart)
+
+TotRnd <- 7
+RndCols <- TotRnd*3
+TotPart <- length(ttbl2[,2])
+ttbl3_Rnds <- matrix(ncol = RndCols, nrow = TotPart)
 
 RndNm <- as.vector('')
-for (iRnd in 1:7) {
+
+for (iRnd in 1:7)
+{
     OldCol <- ttbl2[,iRnd + 3]
-    FirstCol <- iRnd*2 - 1
-    SecCol <- iRnd*2
+    FirstCol <- iRnd*3 - 2
+    SecCol <- iRnd*3 - 1
+    ThrdCol <- iRnd*3
     ttbl3_Rnds[,FirstCol] <- substring(OldCol, 1, 1)
-
     ttbl3_Rnds[,SecCol] <- substring(OldCol, 3, 5)
-    RndNm <- as.vector(c(RndNm, paste("RndRlt", iRnd, collapse = ''), paste("RndOpp", iRnd, collapse = '')))
+    ## pulling the scores of the competitors
+    ttbl3_Rnds[,ThrdCol] <- ttbl3_PNMFull[as.integer(ttbl3_Rnds[,SecCol]) ,2]
+    RndNm <- as.vector(c(RndNm, paste("RndRlt", iRnd, collapse = ''), paste("RndOpp", iRnd, collapse = ''), paste("RndOppSc", iRnd, collapse = '')))
+}
+
+
+
+
+i <- 1
+while( i < (1 + length(ttbl2$Player.Name.1)))
+{
+    j <- 1
+    while(j < 8 )
+    {
+        ttbl3_PNMFull[i, j] <- substr(ttbl2$Player.Name.1[i], SpBrttbl2[j, 1], SpBrttbl2[j, 2])
+        j <- j + 1
     }
+    i <- i + 1
+}
 
-rm(RndNm[1])
 
 
-ttbl4 <-
+
+
+
+
+
+RndNm <- RndNm[2:(length(RndNm)-1)]
+
+ttbl4 <- data.frame(ttbl2[,1:3], ttbl3_PNMFull[,1:5],
 
 ttbl3_Pinfo <- data.frame(
 
