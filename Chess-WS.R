@@ -8,6 +8,9 @@ require(XML)
 require(RCurl)
 require(tau)
 require(graphics)
+
+options(stringsAsFactors = F)
+
 # require(RMySQL)
 
 ## Setting SQL variables
@@ -65,7 +68,11 @@ while( i < (1 + length(ttbl2$Player.Name.1)))
     }
     i <- i + 1
 }
+tttbl3_PreR <- as.vector(c(as.integer(ttbl3_PNMFull[,2])))
+tttbl3_PostR <- as.vector(c(as.integer(ttbl3_PNMFull[,4])))
 
+ttbl3_PNMFull[,2] <- tttbl3_PreR
+ttbl3_PNMFull[,4] <- tttbl3_PostR
 
 #### Matrix of round data
 
@@ -86,53 +93,98 @@ for (iRnd in 1:7)
     ttbl3_Rnds[,SecCol] <- substring(OldCol, 3, 5)
     ## pulling the scores of the competitors
     ttbl3_Rnds[,ThrdCol] <- ttbl3_PNMFull[as.integer(ttbl3_Rnds[,SecCol]) ,2]
-    RndNm <- as.vector(c(RndNm, paste("RndRlt", iRnd, collapse = ''), paste("RndOpp", iRnd, collapse = ''), paste("RndOppSc", iRnd, collapse = '')))
+    RndNm <- as.vector(c(RndNm, paste("RndRlt", iRnd, collapse = ''), paste("RndOpp", iRnd, collapse = ''), paste("RndOppRat", iRnd, collapse = '')))
 }
 
+FullTbl <- data.frame( ttbl2[,1:2], ttbl2[,12], ttbl3_PNMFull[,1:5], ttbl2[,3], ttbl3_Rnds[,1:21])
 
+names(FullTbl) <- as.vector(c("PlayerNbr", "PlayerName", "PlayerState", "USCF_ID", "Pre-Tourn_Rating", "Pre-Tourn_PSc", "Post-Tourn_Rating",  "Post-Tourn_PSc", "TotalPts", as.vector(RndNm[2:22]) ) )
 
+str(FullTbl)
 
-i <- 1
-while( i < (1 + length(ttbl2$Player.Name.1)))
+## To get the mean of the scores of the games played, we need to insure our scores are integers without missing values:
+##
+
+ScrNbr <- matrix( nrow = length(FullTbl[,2]), ncol = 7)
+
+OppScCol <- seq(12, 30, 3)
+
+FTbliRow <- seq(1:length(FullTbl[ , 1]) )
+for( j in FTbliRow)
 {
-    j <- 1
-    while(j < 8 )
+    i <- 1
+    while( i < 8)
     {
-        ttbl3_PNMFull[i, j] <- substr(ttbl2$Player.Name.1[i], SpBrttbl2[j, 1], SpBrttbl2[j, 2])
-        j <- j + 1
+        CurrColNbr <- i*3 + 9
+        ScrNbr[j, i] <- as.integer( FullTbl[j, CurrColNbr] )
+        i <- i + 1
     }
-    i <- i + 1
 }
 
+## with na.rm = T, the rowMeans function will take the average across the columns excluding the na fields
+
+AvgCompSc <- rowMeans(ScrNbr, na.rm = T)
+
+ScrNbr <- ifelse( is.na(ScrNbr[,]), 0, ScrNbr)
+rowsum(ScrNbr)
+
+
+
+
+rowSums
 
 
 
 
 
 
+#
+#
+# i <- 1
+# while( i < (1 + length(ttbl2$Player.Name.1)))
+# {
+#     j <- 1
+#     while(j < 8 )
+#     {
+#         ttbl3_PNMFull[i, j] <- substr(ttbl2$Player.Name.1[i], SpBrttbl2[j, 1], SpBrttbl2[j, 2])
+#         j <- j + 1
+#     }
+#     i <- i + 1
+# }
+#
+#
+#
+#
+#
+#
+#
+#
+# ###### Scrap:
+# ######
+#
+# RndNm <- RndNm[2:(length(RndNm)-1)]
+#
+# ttbl4 <- data.frame(ttbl2[,1:3], ttbl3_PNMFull[,1:5],
+#
+# ttbl3_Pinfo <- data.frame(
+#
+#
+# length(ttbl3_PNMParse)
+#
+# tail(ttbl3_PNMParse)
+# ## Col Names
+# varnm2 <- names(ttbl2)
+# varnm2str <- as.character( paste(varnm2[1:length(varnm2)]))
+#
+# ## Manually edited string gerated by varnm2str to clean up var names
+# names(ttbl2) <- as.vector(c("PlayerNbr", "PlayerName", "TotalPts", "Roundb", "Round.2", "Round.3", "Round.4", "Round.5", "Round.6",  "Round.7", "X", "USCF_ID", "Pre-Tourn_Rating", "Pre-Tourn_PSc", "Post-Tourn_Rating",  "Post-Tourn_PSc", "N-Score", "Round.1b", "Round.2b", "Round.3b", "Round.4b", "Round.5b", "Round.6b",  "Round.6b", "Xb"))
+#
+#
+#
+# ###### Scrap:
+# ######
+# for (i in 1:5) {
+# ttbl3_PNMFull[ ,i] <- ttbl3_PNMParse[ seq.int(i, length(ttbl3_PNMParse), 5) ]
+# }
+# next(i)
 
-RndNm <- RndNm[2:(length(RndNm)-1)]
-
-ttbl4 <- data.frame(ttbl2[,1:3], ttbl3_PNMFull[,1:5],
-
-ttbl3_Pinfo <- data.frame(
-
-
-length(ttbl3_PNMParse)
-
-tail(ttbl3_PNMParse)
-## Col Names
-varnm2 <- names(ttbl2)
-varnm2str <- as.character( paste(varnm2[1:length(varnm2)]))
-
-## Manually edited string gerated by varnm2str to clean up var names
-names(ttbl2) <- as.vector(c("PlayerNbr", "PlayerName", "TotalPts", "Roundb", "Round.2", "Round.3", "Round.4", "Round.5", "Round.6",  "Round.7", "X", "USCF_ID", "Pre-Tourn_Rating", "Pre-Tourn_PSc", "Post-Tourn_Rating",  "Post-Tourn_PSc", "N-Score", "Round.1b", "Round.2b", "Round.3b", "Round.4b", "Round.5b", "Round.6b",  "Round.6b", "Xb"))
-
-
-
-###### Scrap:
-######
-for (i in 1:5) {
-ttbl3_PNMFull[ ,i] <- ttbl3_PNMParse[ seq.int(i, length(ttbl3_PNMParse), 5) ]
-}
-next(i)
